@@ -49,19 +49,6 @@ class Google(Yandex, commands.Cog):
         authors = "Authors: " + ", ".join(self.__authors__)
         return f"{pre_processed}\n\n{authors}\nCog Version: {self.__version__}"
 
-    
-    @commands.command(name="translate")
-    async def translate(self, ctx, *, query: str = None):
-        """Google translate something"""
-        message = ctx.message
-        if not query and ctx.message.reference:
-            message = ctx.message.reference.cached_message or await ctx.channel.fetch_message(ctx.message.reference.message_id)
-            query = message.content if message else None
-        if not query:
-            await ctx.send("`Nothing to translate. Tip: You can reply to a message with this command to translate it.`")
-            return
-        await self.google(ctx, query="translate " + query)
-
     @commands.group(invoke_without_command=True)
     @commands.bot_has_permissions(embed_links=True, add_reactions=True)
     async def google(self, ctx, *, query: str = None):
