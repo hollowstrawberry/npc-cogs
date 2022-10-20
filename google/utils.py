@@ -256,6 +256,11 @@ class ResultMenu(menus.MenuPages, inherit_buttons=False):
     async def finalize(self, timed_out):
         if timed_out and self.delete_message_after:
             self.delete_message_after = False
+            
+    async def send_initial_message(self, ctx, channel):
+        page = await self._source.get_page(0)
+        kwargs = await self._get_kwargs_from_page(page)
+        return await ctx.send(**kwargs)
 
     @menus.button(
         "\u23ee\ufe0f",
