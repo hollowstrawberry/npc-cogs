@@ -7,6 +7,12 @@ from html2text import html2text as h2t
 from redbot.core.utils.chat_formatting import pagify
 from redbot.vendored.discord.ext import menus
 
+try:
+    from slashtags import BaseButtonMenu
+    BASE_MENU = ButtonMenu
+except ImportError as exc:
+    BASE_MENU = menus.MenuPages
+
 nsfwcheck = lambda ctx: (not ctx.guild) or ctx.channel.is_nsfw()
 
 s = namedtuple("searchres", "url title desc")
@@ -241,7 +247,7 @@ class Source(menus.ListPageSource):
 
 
 # Thanks fixator https://github.com/fixator10/Fixator10-Cogs/blob/V3.leveler_abc/leveler/menus/top.py
-class ResultMenu(menus.MenuPages, inherit_buttons=False):
+class ResultMenu(BASE_MENU, inherit_buttons=False):
     def __init__(self, **kwargs):
         super().__init__(
             **kwargs,
@@ -257,10 +263,10 @@ class ResultMenu(menus.MenuPages, inherit_buttons=False):
         if timed_out and self.delete_message_after:
             self.delete_message_after = False
             
-    async def send_initial_message(self, ctx, channel):
-        page = await self._source.get_page(0)
-        kwargs = await self._get_kwargs_from_page(page)
-        return await ctx.send(**kwargs)
+    # async def send_initial_message(self, ctx, channel):
+    #     page = await self._source.get_page(0)
+    #     kwargs = await self._get_kwargs_from_page(page)
+    #     return await ctx.send(**kwargs)
 
     @menus.button(
         "\u23ee\ufe0f",
