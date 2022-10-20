@@ -27,7 +27,7 @@ class Mixture(ThemesMeta):
                         if i == 0:
                             title = (
                                 str(cat.reaction) if cat.reaction else ""
-                            ) + f"**{cat.name.capitalize()}:**"
+                            ) + f" **{cat.name.capitalize()}:**"
                         else:
                             title = EMPTY_STRING
                         emb["fields"].append(EmbedField(title, "> " + page, False))
@@ -75,10 +75,14 @@ class Mixture(ThemesMeta):
                     shorten_line(f"`{name:<{spacing}}:`{command.format_shortdoc_for_context(ctx)}")
                     for name, command in sorted(data.items())
                 )
-                for i, page in enumerate(pagify(cog_text, page_length=1000, shorten_by=0)):
+                for i, page in enumerate(pagify(cog_text, page_length=4000 if len(coms) == 1 else 1000, shorten_by=0)):
                     title = title if i < 1 else _("{title} (continued)").format(title=title)
-                    field = EmbedField(title, page, False)
-                    emb["fields"].append(field)
+                    if len(coms) == 1:
+                        emb["embed"]["title"] = title
+                        emb["embed"]["description"] = page
+                    else:
+                        field = EmbedField(title, page, False)
+                        emb["fields"].append(field)
 
             pages = await self.make_embeds(ctx, emb, help_settings=help_settings)
             if get_pages:
