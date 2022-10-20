@@ -9,7 +9,7 @@ from redbot.vendored.discord.ext import menus
 
 try:
     from slashtags import BaseButtonMenu
-    BASE_MENU = ButtonMenu
+    BASE_MENU = BaseButtonMenu
 except ImportError as exc:
     BASE_MENU = menus.MenuPages
 
