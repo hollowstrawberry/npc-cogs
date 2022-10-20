@@ -7,12 +7,6 @@ from html2text import html2text as h2t
 from redbot.core.utils.chat_formatting import pagify
 from redbot.vendored.discord.ext import menus
 
-try:
-    from slashtags import BaseButtonMenu
-    BASE_MENU = BaseButtonMenu
-except ImportError as exc:
-    BASE_MENU = menus.MenuPages
-
 nsfwcheck = lambda ctx: (not ctx.guild) or ctx.channel.is_nsfw()
 
 s = namedtuple("searchres", "url title desc")
@@ -247,7 +241,7 @@ class Source(menus.ListPageSource):
 
 
 # Thanks fixator https://github.com/fixator10/Fixator10-Cogs/blob/V3.leveler_abc/leveler/menus/top.py
-class ResultMenu(BASE_MENU, inherit_buttons=False):
+class ResultMenu(menus.MenuPages, inherit_buttons=False):
     def __init__(self, **kwargs):
         super().__init__(
             **kwargs,
