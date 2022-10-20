@@ -82,7 +82,7 @@ class MenuButtons(MenuMixin, commands.Cog):
         def_ctrls = menus.DEFAULT_CONTROLS
         def_ctrls.clear()
 
-        for name, emoji in raw_arrows:
+        for name, emoji in raw_arrows.items():
             if valid_emoji := quick_emoji_converter(self.bot, emoji):
                 def_ctrls[valid_emoji] = self.map_conf_arrows[name]
             else:
