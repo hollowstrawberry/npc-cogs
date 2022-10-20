@@ -18,6 +18,11 @@ from redbot.vendored.discord.ext import menus
 from .utils import ResultMenu, Source, get_card, get_query, nsfwcheck, s
 from .yandex import Yandex
 
+try:
+  from slashtags import ButtonMenu as ResultMenu
+except ImportError:
+    pass
+
 # TODO Add optional way to use from google search api
 
 
