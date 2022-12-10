@@ -7,7 +7,7 @@ from html2text import html2text as h2t
 from redbot.core.utils.chat_formatting import pagify
 from redbot.vendored.discord.ext import menus
 
-nsfwcheck = lambda ctx: (not ctx.guild) or ctx.channel.is_nsfw()
+nsfwcheck = lambda ctx: (not ctx.guild) or isinstance(ctx.channel, discord.TextChannel) and ctx.channel.is_nsfw()
 
 s = namedtuple("searchres", "url title desc")
 
