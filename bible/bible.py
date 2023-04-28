@@ -141,7 +141,7 @@ class Bible(commands.Cog):
                         "1) Kindly make sure the verse exists\n"
                         "2) Use the format of `book chapter:verse-range`"
                     )
-            if len(pages > 1):
+            if len(pages) > 1:
                 await Paginator.Simple(timeout=600).start(ctx, pages)
             else:
                 await ctx.send(embed=pages[0])
