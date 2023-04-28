@@ -8,14 +8,14 @@ from urllib.parse import quote_plus, urlencode
 
 import aiohttp
 import discord
+import Paginator
 from bs4 import BeautifulSoup
 from html2text import html2text as h2t
 from redbot.core import commands
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import humanize_number, text_to_file
 from redbot.vendored.discord.ext import menus
-
-from .utils import ResultMenu, Source, get_card, get_query, nsfwcheck, s
+from .utils import Source, get_card, get_query, nsfwcheck, s
 from .yandex import Yandex
 
 # TODO Add optional way to use from google search api
@@ -90,7 +90,7 @@ class Google(Yandex, commands.Cog):
                     emb.set_image(url=kwargs["image"])
                 pages.append(emb)
         if pages:
-            await ResultMenu(source=Source(pages, per_page=1)).start(ctx)
+            await Paginator.Simple().start(ctx, pages=pages)
         else:
             await ctx.send("No results.")
 
@@ -234,7 +234,7 @@ class Google(Yandex, commands.Cog):
             if len(pages) == 1:
                 await ctx.send(embed=pages[0])
             else:
-                await ResultMenu(source=Source(pages, per_page=1)).start(ctx)
+                await Paginator.Simple().start(ctx, pages=pages)
 
     @commands.hybrid_command()
     async def googledoodle(self, ctx, month: int = None, year: int = None):
@@ -275,7 +275,7 @@ class Google(Yandex, commands.Cog):
         if len(pages) == 1:
             return await ctx.send(embed=pages[0])
         else:
-            await ResultMenu(source=Source(pages, per_page=1)).start(ctx)
+            await Paginator.Simple().start(ctx, pages=pages)
 
     @commands.hybrid_command(aliases=["img"])
     async def googleimage(self, ctx, *, query: str = None):
@@ -284,25 +284,21 @@ class Google(Yandex, commands.Cog):
             await ctx.send("Please enter some image name to search")
         else:
             isnsfw = nsfwcheck(ctx)
+            pages = []
             async with ctx.typing():
                 response, kwargs = await self.get_result(query, images=True, nsfw=isnsfw)
-                size = len(response)
-
-                class ImgSource(menus.ListPageSource):
-                    async def format_page(self, menu, entry):
-                        return (
-                            discord.Embed(
-                                title=f"Pages: {menu.current_page+1}/{size}",
-                                color=await ctx.embed_color(),
-                                description="Some images might not be visible.",
-                                url=kwargs["redir"],
-                            )
-                            .set_image(url=entry)
-                            .set_footer(text=f"Safe Search: {not isnsfw}")
-                        )
-
+            size = len(response)
+            for i, result in enumerate(response):
+                embed = discord.Embed(
+                        title=f"Pages: {i+1}/{size}",
+                        color=await ctx.embed_color(),
+                        description="Some images might not be visible.",
+                        url=kwargs["redir"])
+                embed.set_image(url=result)
+                embed.set_footer(text=f"Safe Search: {not isnsfw}")
+                pages.append(embed)
             if size > 0:
-                await ResultMenu(source=ImgSource(response, per_page=1)).start(ctx)
+                await Paginator.Simple().start(ctx, pages=pages)
             else:
                 await ctx.send("No result")
 
@@ -334,7 +330,7 @@ class Google(Yandex, commands.Cog):
             result, (response, kwargs) = await self.bot.loop.run_in_executor(None, prep)
             pages = []
             if response:
-                groups = [response[n : n + 3] for n in range(0, len(response), 3)]
+                groups = [response[n:n+3] for n in range(0, len(response), 3)]
                 for num, group in enumerate(groups, 1):
                     emb = discord.Embed(
                         title="Google Reverse Image Search",
@@ -358,12 +354,12 @@ class Google(Yandex, commands.Cog):
                     emb.set_thumbnail(url=encoded["image_url"])
                     pages.append(emb)
             if pages:
-                await ResultMenu(source=Source(pages, per_page=1)).start(ctx)
+                await Paginator.Simple().start(ctx, pages=pages)
             else:
                 await ctx.send(
                     embed=discord.Embed(
                         title="Google Reverse Image Search",
-                        description="[`" + ("Nothing significant found") + f"`]({redir_url})",
+                        description="[`" + "Nothing significant found" + f"`]({redir_url})",
                         color=await ctx.embed_color(),
                     ).set_thumbnail(url=encoded["image_url"])
                 )
