@@ -722,9 +722,10 @@ class CustomHelp(commands.Cog):
         await getattr(self.config.theme, feature).set(None)
         await ctx.tick()
 
-    @chelp.group()
+    @chelp.group(invoke_without_command=True)
     async def remove(self, ctx):
         """Remove categories/cogs or everything"""
+        await ctx.send_help()
 
     @remove.command()
     async def all(self, ctx):
