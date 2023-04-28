@@ -18,11 +18,6 @@ from redbot.vendored.discord.ext import menus
 from .utils import ResultMenu, Source, get_card, get_query, nsfwcheck, s
 from .yandex import Yandex
 
-try:
-  from slashtags import ButtonMenu as ResultMenu
-except ImportError:
-    pass
-
 # TODO Add optional way to use from google search api
 
 
@@ -35,6 +30,7 @@ class Google(Yandex, commands.Cog):
     __authors__ = ["epic guy", "ow0x", "fixator10"]
 
     def __init__(self, bot: Red) -> None:
+        super().__init__()
         self.bot = bot
         self.options = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36",
@@ -54,7 +50,7 @@ class Google(Yandex, commands.Cog):
         authors = "Authors: " + ", ".join(self.__authors__)
         return f"{pre_processed}\n\n{authors}\nCog Version: {self.__version__}"
 
-    @commands.group(invoke_without_command=True)
+    @commands.hybrid_command()
     @commands.bot_has_permissions(embed_links=True, add_reactions=True)
     async def google(self, ctx, *, query: str = None):
         """Google search your query from Discord channel."""
@@ -98,8 +94,8 @@ class Google(Yandex, commands.Cog):
         else:
             await ctx.send("No results.")
 
-    @google.command()
-    async def autofill(self, ctx, *, query: str):
+    @commands.hybrid_command()
+    async def googleautofill(self, ctx, *, query: str):
         """Responds with a list of the Google Autofill results for a particular query."""
 
         params = {"client": "firefox", "hl": "en", "q": query}
@@ -121,8 +117,8 @@ class Google(Yandex, commands.Cog):
 
             await ctx.send("\n".join(data[1]))
 
-    @google.command(aliases=["books"])
-    async def book(self, ctx, *, query: str):
+    @commands.hybrid_command(aliases=["books"])
+    async def googlebook(self, ctx, *, query: str):
         """Search for a book or magazine on Google Books.
 
         This command requires an API key. If you are the bot owner,
@@ -240,8 +236,8 @@ class Google(Yandex, commands.Cog):
             else:
                 await ResultMenu(source=Source(pages, per_page=1)).start(ctx)
 
-    @google.command()
-    async def doodle(self, ctx, month: int = None, year: int = None):
+    @commands.hybrid_command()
+    async def googledoodle(self, ctx, month: int = None, year: int = None):
         """Responds with Google doodles of the current month.
 
         Or doodles of specific month/year if `month` and `year` values are provided.
@@ -281,8 +277,8 @@ class Google(Yandex, commands.Cog):
         else:
             await ResultMenu(source=Source(pages, per_page=1)).start(ctx)
 
-    @google.command(aliases=["img"])
-    async def image(self, ctx, *, query: str = None):
+    @commands.hybrid_command(aliases=["img"])
+    async def googleimage(self, ctx, *, query: str = None):
         """Search google images from discord"""
         if not query:
             await ctx.send("Please enter some image name to search")
@@ -310,8 +306,8 @@ class Google(Yandex, commands.Cog):
             else:
                 await ctx.send("No result")
 
-    @google.command(aliases=["rev"], enabled=False)
-    async def reverse(self, ctx, *, url: str = None):
+    @commands.command(aliases=["rev"], enabled=False)
+    async def googlereverse(self, ctx, *, url: str = None):
         """Attach or paste the url of an image to reverse search, or reply to a message which has the image/embed with the image"""
         isnsfw = nsfwcheck(ctx)
         if query := get_query(ctx, url):
@@ -373,7 +369,7 @@ class Google(Yandex, commands.Cog):
                 )
 
     @commands.is_owner()
-    @google.command(hidden=True)
+    @commands.command(hidden=True)
     async def debug(self, ctx, url: str):
         await ctx.trigger_typing()
         async with self.session.get(url, headers=self.options) as resp:
