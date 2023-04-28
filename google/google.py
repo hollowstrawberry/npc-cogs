@@ -14,11 +14,10 @@ from html2text import html2text as h2t
 from redbot.core import commands
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import humanize_number, text_to_file
-from redbot.vendored.discord.ext import menus
-from .utils import Source, get_card, get_query, nsfwcheck, s
+from .utils import get_card, get_query, nsfwcheck, s
 from .yandex import Yandex
 
-# TODO Add optional way to use from google search api
+GOOGLE_ICON = "https://lh3.googleusercontent.com/COxitqgJr1sJnIDe8-jiKhxDx1FrYbtRHKJ9z_hELisAlapwE9LUPh6fcXIfb5vwpbMl4xl9H9TRFPc5NOO8Sb3VSgIBrfRYvW6cUA"
 
 
 class Google(Yandex, commands.Cog):
@@ -52,20 +51,20 @@ class Google(Yandex, commands.Cog):
 
     @commands.hybrid_command()
     @commands.bot_has_permissions(embed_links=True, add_reactions=True)
-    async def google(self, ctx, *, query: str = None):
-        """Google search your query from Discord channel."""
-        if not query:
+    async def google(self, ctx, *, search: str):
+        """Search anything on Google."""
+        if not search:
             return await ctx.send("Please enter something to search")
 
         isnsfw = nsfwcheck(ctx)
         async with ctx.typing():
-            response, kwargs = await self.get_result(query, nsfw=isnsfw)
+            response, kwargs = await self.get_result(search, nsfw=isnsfw)
             pages = []
             groups = [response[n : n + 1] for n in range(0, len(response), 1)]
             for num, group in enumerate(groups, 1):
                 emb = discord.Embed(
                     title="Google Search: {}".format(
-                        query[:44] + "\N{HORIZONTAL ELLIPSIS}" if len(query) > 45 else query
+                        search[:44] + "\N{HORIZONTAL ELLIPSIS}" if len(search) > 45 else search
                     ),
                     color=await ctx.embed_color(),
                     url=kwargs["redir"],
@@ -79,7 +78,6 @@ class Google(Yandex, commands.Cog):
                         value=desc or "Nothing",
                         inline=False,
                     )
-                emb.description = f"Page {num} of {len(groups)}"
                 emb.set_footer(
                     text=f"Safe Search: {not isnsfw} | " + kwargs["stats"].replace("\n", " ")
                 )
@@ -90,15 +88,15 @@ class Google(Yandex, commands.Cog):
                     emb.set_image(url=kwargs["image"])
                 pages.append(emb)
         if pages:
-            await Paginator.Simple().start(ctx, pages=pages)
+            await Paginator.Simple(timeout=600).start(ctx, pages=pages)
         else:
             await ctx.send("No results.")
 
     @commands.hybrid_command()
-    async def googleautofill(self, ctx, *, query: str):
-        """Responds with a list of the Google Autofill results for a particular query."""
+    async def googleautofill(self, ctx, *, search: str):
+        """Responds with a list of Google autofill results."""
 
-        params = {"client": "firefox", "hl": "en", "q": query}
+        params = {"client": "firefox", "hl": "en", "q": search}
         async with ctx.typing():
             # This “API” is a bit of a hack; it was only meant for use by
             # Google’s own products. and hence it is undocumented.
@@ -234,14 +232,11 @@ class Google(Yandex, commands.Cog):
             if len(pages) == 1:
                 await ctx.send(embed=pages[0])
             else:
-                await Paginator.Simple().start(ctx, pages=pages)
+                await Paginator.Simple(timeout=600).start(ctx, pages=pages)
 
     @commands.hybrid_command()
     async def googledoodle(self, ctx, month: int = None, year: int = None):
-        """Responds with Google doodles of the current month.
-
-        Or doodles of specific month/year if `month` and `year` values are provided.
-        """
+        """Responds with Google doodles of the current month."""
         month = month or datetime.now(timezone.utc).month
         year = year or datetime.now(timezone.utc).year
 
@@ -275,38 +270,38 @@ class Google(Yandex, commands.Cog):
         if len(pages) == 1:
             return await ctx.send(embed=pages[0])
         else:
-            await Paginator.Simple().start(ctx, pages=pages)
+            await Paginator.Simple(timeout=600).start(ctx, pages=pages)
 
     @commands.hybrid_command(aliases=["img"])
-    async def googleimage(self, ctx, *, query: str = None):
-        """Search google images from discord"""
-        if not query:
+    async def googleimage(self, ctx, *, search: str):
+        """Search images on Google."""
+        if not search:
             await ctx.send("Please enter some image name to search")
         else:
             isnsfw = nsfwcheck(ctx)
             pages = []
             async with ctx.typing():
-                response, kwargs = await self.get_result(query, images=True, nsfw=isnsfw)
+                response, kwargs = await self.get_result(search, images=True, nsfw=isnsfw)
             size = len(response)
             for i, result in enumerate(response):
                 embed = discord.Embed(
-                        title=f"Pages: {i+1}/{size}",
                         color=await ctx.embed_color(),
                         description="Some images might not be visible.",
                         url=kwargs["redir"])
+                embed.set_author(name="Google Images", icon_url=GOOGLE_ICON)
                 embed.set_image(url=result)
                 embed.set_footer(text=f"Safe Search: {not isnsfw}")
                 pages.append(embed)
             if size > 0:
-                await Paginator.Simple().start(ctx, pages=pages)
+                await Paginator.Simple(timeout=600).start(ctx, pages=pages)
             else:
                 await ctx.send("No result")
 
-    @commands.command(aliases=["rev"], enabled=False)
-    async def googlereverse(self, ctx, *, url: str = None):
-        """Attach or paste the url of an image to reverse search, or reply to a message which has the image/embed with the image"""
+    @commands.hybrid_command()
+    async def googlereverse(self, ctx, *, image_url: str = None):
+        """Reverse search an image on Google."""
         isnsfw = nsfwcheck(ctx)
-        if query := get_query(ctx, url):
+        if query := get_query(ctx, image_url):
             pass
         else:
             return await ctx.send_help()
@@ -333,7 +328,6 @@ class Google(Yandex, commands.Cog):
                 groups = [response[n:n+3] for n in range(0, len(response), 3)]
                 for num, group in enumerate(groups, 1):
                     emb = discord.Embed(
-                        title="Google Reverse Image Search",
                         description="[`"
                         + (result or "Nothing significant found")
                         + f"`]({redir_url})",
@@ -349,12 +343,12 @@ class Google(Yandex, commands.Cog):
                     emb.set_footer(
                         text=f"Safe Search: {not isnsfw} | "
                         + kwargs["stats"].replace("\n", " ")
-                        + f"| Page: {num}/{len(groups)}"
                     )
+                    emb.set_author(name="Google Reverse Image Search", icon_url=GOOGLE_ICON)
                     emb.set_thumbnail(url=encoded["image_url"])
                     pages.append(emb)
             if pages:
-                await Paginator.Simple().start(ctx, pages=pages)
+                await Paginator.Simple(timeout=600).start(ctx, pages=pages)
             else:
                 await ctx.send(
                     embed=discord.Embed(

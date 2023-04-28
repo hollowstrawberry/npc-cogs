@@ -5,7 +5,6 @@ from collections import namedtuple
 import discord
 from html2text import html2text as h2t
 from redbot.core.utils.chat_formatting import pagify
-from redbot.vendored.discord.ext import menus
 
 nsfwcheck = lambda ctx: (not ctx.guild) or isinstance(ctx.channel, discord.TextChannel) and ctx.channel.is_nsfw()
 
@@ -232,71 +231,3 @@ def get_card(soup, final, kwargs):
     if card := soup.find("div", class_="sXLaOe"):
         final.append(s(None, "Single Answer Card:", card.text))
         return
-
-
-# Dpy menus
-class Source(menus.ListPageSource):
-    async def format_page(self, menu, embeds):
-        return embeds
-
-
-# Thanks fixator https://github.com/fixator10/Fixator10-Cogs/blob/V3.leveler_abc/leveler/menus/top.py
-class ResultMenu(menus.MenuPages, inherit_buttons=False):
-    def __init__(self, **kwargs):
-        super().__init__(
-            **kwargs,
-            timeout=60,
-            clear_reactions_after=True,
-            delete_message_after=True,
-        )
-
-    def _skip_double_triangle_buttons(self):
-        return super()._skip_double_triangle_buttons()
-
-    async def finalize(self, timed_out):
-        if timed_out and self.delete_message_after:
-            self.delete_message_after = False
-            
-    # async def send_initial_message(self, ctx, channel):
-    #     page = await self._source.get_page(0)
-    #     kwargs = await self._get_kwargs_from_page(page)
-    #     return await ctx.send(**kwargs)
-
-    @menus.button(
-        "\u23ee\ufe0f",
-        position=menus.First(0),
-        skip_if=_skip_double_triangle_buttons,
-    )
-    async def go_to_first_page(self, payload):
-        """go to the first page"""
-        await self.show_page(0)
-
-    @menus.button("\u2b05\ufe0f", position=menus.First(1))
-    async def go_to_previous_page(self, payload):
-        """go to the previous page"""
-        if self.current_page == 0:
-            await self.show_page(self._source.get_max_pages() - 1)
-        else:
-            await self.show_checked_page(self.current_page - 1)
-
-    @menus.button("\u27a1\ufe0f", position=menus.Last(0))
-    async def go_to_next_page(self, payload):
-        """go to the next page"""
-        if self.current_page == self._source.get_max_pages() - 1:
-            await self.show_page(0)
-        else:
-            await self.show_checked_page(self.current_page + 1)
-
-    @menus.button(
-        "\u23ed\ufe0f",
-        position=menus.Last(1),
-        skip_if=_skip_double_triangle_buttons,
-    )
-    async def go_to_last_page(self, payload):
-        """go to the last page"""
-        # The call here is safe because it's guarded by skip_if
-        await self.show_page(self._source.get_max_pages() - 1)
-
-    @menus.button("\N{CROSS MARK}", position=menus.First(2))
-    async def stop_pages(self, payload) -> None:
-        self.stop()
