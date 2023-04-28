@@ -22,6 +22,9 @@ class Bible(commands.Cog):
         self.BASE_URL = "https://www.biblegateway.com"
         self.ver_re = re.compile(r"--?(?:V|v|ver|version)(?:=| )(\w+)")
 
+    async def red_delete_data_for_user(self, *, requester, user_id: int) -> None:
+        return
+
     def parse_search(self, text, title, version, emb_color):
         fields = []
         pages = []
@@ -140,11 +143,3 @@ class Bible(commands.Cog):
                     )
 
                 await Paginator.Simple(timeout=600).start(ctx, pages)
-
-    async def red_delete_data_for_user(self, *, requester, user_id: int) -> None:
-        return
-
-
-class Source(menus.ListPageSource):
-    async def format_page(self, menu, embeds):
-        return embeds
