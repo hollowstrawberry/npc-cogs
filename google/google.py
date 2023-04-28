@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from html2text import html2text as h2t
 from redbot.core import commands
 from redbot.core.bot import Red
-from redbot.core.utils.chat_formatting import humanize_number, text_to_file
+from redbot.core.utils.chat_formatting import humanize_number
 from .utils import get_card, get_query, nsfwcheck, s
 from .yandex import Yandex
 
@@ -357,16 +357,6 @@ class Google(Yandex, commands.Cog):
             return await ctx.send(embed=pages[0])
         else:
             await Paginator.Simple(timeout=600).start(ctx, pages)
-
-    @commands.is_owner()
-    @commands.command(hidden=True)
-    async def debug(self, ctx, url: str):
-        await ctx.trigger_typing()
-        async with self.session.get(url, headers=self.options) as resp:
-            text = await resp.text()
-        raw_html = BeautifulSoup(text, "html.parser")
-        data = raw_html.prettify()
-        await ctx.send(file=text_to_file(data, filename="google_debug.html"))
 
     async def get_result(self, query, images=False, nsfw=False):
         """Fetch the data"""
