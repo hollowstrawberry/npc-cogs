@@ -88,7 +88,7 @@ class Bible(commands.Cog):
         return pages
 
     @commands.hybrid_command()
-    async def bible(self, ctx, *, query):
+    async def bible(self, ctx, *, search):
         """
         Pull up bible verses or reverse search by querying a word and get all it's references
 
@@ -101,11 +101,11 @@ class Bible(commands.Cog):
         [p]bible test
         """
         version = "NIV"
-        if ver_match := self.ver_re.search(query):
+        if ver_match := self.ver_re.search(search):
             version = ver_match.group(1)
-            query = self.ver_re.sub("", query).strip()
+            search = self.ver_re.sub("", search).strip()
 
-        if re.match(r"\w+(?: ?)\d+:\d+", query):
+        if re.match(r"\w+(?: ?)\d+:\d+", search):
             url = "/passage/?search="
         else:
             url = "/quicksearch/?quicksearch="
@@ -113,7 +113,7 @@ class Bible(commands.Cog):
         async with ctx.typing():
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    self.BASE_URL + url + query + f"&version={version}"
+                    self.BASE_URL + url + search + f"&version={version}"
                 ) as resp:
                     soup = bs4.BeautifulSoup(await resp.text(), "html.parser")
 
@@ -132,7 +132,7 @@ class Bible(commands.Cog):
                 # Word Search
                 elif text := soup.find("div", {"class": "search-result-list"}):
                     pages = self.parse_search(
-                        text, query, version, emb_color=await ctx.embed_color()
+                        text, search, version, emb_color=await ctx.embed_color()
                     )
                 # No result checks
                 else:
@@ -141,5 +141,7 @@ class Bible(commands.Cog):
                         "1) Kindly make sure the verse exists\n"
                         "2) Use the format of `book chapter:verse-range`"
                     )
-
+            if len(pages > 1):
                 await Paginator.Simple(timeout=600).start(ctx, pages)
+            else:
+                await ctx.send(embed=pages[0])
