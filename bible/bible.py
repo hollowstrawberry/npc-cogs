@@ -1,13 +1,12 @@
 import re
-
 import aiohttp
 import bs4
 import discord
+import Paginator
 from html2text import html2text as h2t
 from redbot.core import commands
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import pagify
-from redbot.vendored.discord.ext import menus
 
 from .utils import EmbedField, group_embed_fields
 
@@ -17,7 +16,8 @@ class Bible(commands.Cog):
     Pull up biblical verses fast
     """
 
-    def __init__(self, bot: Red) -> None:
+    def __init__(self, bot: Red):
+        super().__init__()
         self.bot = bot
         self.BASE_URL = "https://www.biblegateway.com"
         self.ver_re = re.compile(r"--?(?:V|v|ver|version)(?:=| )(\w+)")
@@ -84,11 +84,10 @@ class Bible(commands.Cog):
             pages.append(emb)
         return pages
 
-    @commands.command()
+    @commands.hybrid_command()
     async def bible(self, ctx, *, query):
         """
         Pull up bible verses or reverse search by querying a word and get all it's references
-
 
         Now supports version as well, look up to this site for available versions: https://www.biblegateway.com/versions
 
@@ -140,8 +139,7 @@ class Bible(commands.Cog):
                         "2) Use the format of `book chapter:verse-range`"
                     )
 
-                menu = menus.MenuPages(Source(pages, per_page=1), clear_reactions_after=True)
-                await menu.start(ctx)
+                await Paginator.Simple(timeout=600).start(ctx, pages)
 
     async def red_delete_data_for_user(self, *, requester, user_id: int) -> None:
         return

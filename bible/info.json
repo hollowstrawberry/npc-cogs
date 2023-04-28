@@ -10,7 +10,8 @@
     "required_cogs": {},
     "requirements": [
         "html2text",
-        "beautifulsoup4"
+        "beautifulsoup4",
+        "discord.py-pagination"
     ],
     "tags": [
         "utility",

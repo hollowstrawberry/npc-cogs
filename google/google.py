@@ -88,9 +88,34 @@ class Google(Yandex, commands.Cog):
                     emb.set_image(url=kwargs["image"])
                 pages.append(emb)
         if pages:
-            await Paginator.Simple(timeout=600).start(ctx, pages=pages)
+            await Paginator.Simple(timeout=600).start(ctx, pages)
         else:
             await ctx.send("No results.")
+
+    @commands.hybrid_command(aliases=["img"])
+    async def googleimage(self, ctx, *, search: str):
+        """Search images on Google."""
+        if not search:
+            await ctx.send("Please enter some image name to search")
+        else:
+            isnsfw = nsfwcheck(ctx)
+            pages = []
+            async with ctx.typing():
+                response, kwargs = await self.get_result(search, images=True, nsfw=isnsfw)
+            size = len(response)
+            for result in response:
+                embed = discord.Embed(
+                    color=await ctx.embed_color(),
+                    description="Some images might not be visible.",
+                    url=kwargs["redir"])
+                embed.set_author(name="Google Images", icon_url=GOOGLE_ICON)
+                embed.set_image(url=result)
+                embed.set_footer(text=f"Safe Search: {not isnsfw}")
+                pages.append(embed)
+            if size > 0:
+                await Paginator.Simple(timeout=600).start(ctx, pages)
+            else:
+                await ctx.send("No result")
 
     @commands.hybrid_command()
     async def googleautofill(self, ctx, *, search: str):
@@ -115,8 +140,69 @@ class Google(Yandex, commands.Cog):
 
             await ctx.send("\n".join(data[1]))
 
+    @commands.hybrid_command()
+    async def googlereverse(self, ctx, *, image_url: str = None):
+        """Reverse search an image on Google."""
+        isnsfw = nsfwcheck(ctx)
+        if query := get_query(ctx, image_url):
+            pass
+        else:
+            return await ctx.send_help()
+
+        encoded = {
+            "image_url": query,
+            "encoded_image": None,
+            "image_content": None,
+            "filename": None,
+            "hl": "en",
+        }
+
+        async with ctx.typing():
+            async with self.session.get(
+                "https://www.google.com/searchbyimage?" + urlencode(encoded),
+                headers=self.options,
+            ) as resp:
+                text = await resp.read()
+                redir_url = resp.url
+            prep = functools.partial(self.reverse_search, text)
+            result, (response, kwargs) = await self.bot.loop.run_in_executor(None, prep)
+            pages = []
+            if response:
+                groups = [response[n:n+3] for n in range(0, len(response), 3)]
+                for num, group in enumerate(groups, 1):
+                    emb = discord.Embed(
+                        description="[`"
+                        + (result or "Nothing significant found")
+                        + f"`]({redir_url})",
+                        color=await ctx.embed_color(),
+                    )
+                    for i in group:
+                        desc = (f"[{i.url[:60]}]({i.url})\n" if i.url else "") + f"{i.desc}"[:1024]
+                        emb.add_field(
+                            name=f"{i.title}",
+                            value=desc or "Nothing",
+                            inline=False,
+                        )
+                    emb.set_footer(
+                        text=f"Safe Search: {not isnsfw} | "
+                        + kwargs["stats"].replace("\n", " ")
+                    )
+                    emb.set_author(name="Google Reverse Image Search", icon_url=GOOGLE_ICON)
+                    emb.set_thumbnail(url=encoded["image_url"])
+                    pages.append(emb)
+            if pages:
+                await Paginator.Simple(timeout=600).start(ctx, pages)
+            else:
+                await ctx.send(
+                    embed=discord.Embed(
+                        title="Google Reverse Image Search",
+                        description="[`" + "Nothing significant found" + f"`]({redir_url})",
+                        color=await ctx.embed_color(),
+                    ).set_thumbnail(url=encoded["image_url"])
+                )
+
     @commands.hybrid_command(aliases=["books"])
-    async def googlebook(self, ctx, *, query: str):
+    async def googlebook(self, ctx, *, search: str):
         """Search for a book or magazine on Google Books.
 
         This command requires an API key. If you are the bot owner,
@@ -135,7 +221,7 @@ class Google(Yandex, commands.Cog):
             base_url = "https://www.googleapis.com/books/v1/volumes"
             params = {
                 "apiKey": api_key,
-                "q": query,
+                "q": search,
                 "printType": "all",
                 "maxResults": 20,
                 "orderBy": "relevance",
@@ -161,7 +247,7 @@ class Google(Yandex, commands.Cog):
                 embed.set_author(
                     name="Google Books",
                     url="https://books.google.com/",
-                    icon_url="https://i.imgur.com/N3oHABo.png",
+                    icon_url=GOOGLE_ICON,
                 )
                 if info.get("volumeInfo").get("imageLinks"):
                     embed.set_thumbnail(
@@ -232,7 +318,7 @@ class Google(Yandex, commands.Cog):
             if len(pages) == 1:
                 await ctx.send(embed=pages[0])
             else:
-                await Paginator.Simple(timeout=600).start(ctx, pages=pages)
+                await Paginator.Simple(timeout=600).start(ctx, pages)
 
     @commands.hybrid_command()
     async def googledoodle(self, ctx, month: int = None, year: int = None):
@@ -270,93 +356,7 @@ class Google(Yandex, commands.Cog):
         if len(pages) == 1:
             return await ctx.send(embed=pages[0])
         else:
-            await Paginator.Simple(timeout=600).start(ctx, pages=pages)
-
-    @commands.hybrid_command(aliases=["img"])
-    async def googleimage(self, ctx, *, search: str):
-        """Search images on Google."""
-        if not search:
-            await ctx.send("Please enter some image name to search")
-        else:
-            isnsfw = nsfwcheck(ctx)
-            pages = []
-            async with ctx.typing():
-                response, kwargs = await self.get_result(search, images=True, nsfw=isnsfw)
-            size = len(response)
-            for i, result in enumerate(response):
-                embed = discord.Embed(
-                        color=await ctx.embed_color(),
-                        description="Some images might not be visible.",
-                        url=kwargs["redir"])
-                embed.set_author(name="Google Images", icon_url=GOOGLE_ICON)
-                embed.set_image(url=result)
-                embed.set_footer(text=f"Safe Search: {not isnsfw}")
-                pages.append(embed)
-            if size > 0:
-                await Paginator.Simple(timeout=600).start(ctx, pages=pages)
-            else:
-                await ctx.send("No result")
-
-    @commands.hybrid_command()
-    async def googlereverse(self, ctx, *, image_url: str = None):
-        """Reverse search an image on Google."""
-        isnsfw = nsfwcheck(ctx)
-        if query := get_query(ctx, image_url):
-            pass
-        else:
-            return await ctx.send_help()
-
-        encoded = {
-            "image_url": query,
-            "encoded_image": None,
-            "image_content": None,
-            "filename": None,
-            "hl": "en",
-        }
-
-        async with ctx.typing():
-            async with self.session.get(
-                "https://www.google.com/searchbyimage?" + urlencode(encoded),
-                headers=self.options,
-            ) as resp:
-                text = await resp.read()
-                redir_url = resp.url
-            prep = functools.partial(self.reverse_search, text)
-            result, (response, kwargs) = await self.bot.loop.run_in_executor(None, prep)
-            pages = []
-            if response:
-                groups = [response[n:n+3] for n in range(0, len(response), 3)]
-                for num, group in enumerate(groups, 1):
-                    emb = discord.Embed(
-                        description="[`"
-                        + (result or "Nothing significant found")
-                        + f"`]({redir_url})",
-                        color=await ctx.embed_color(),
-                    )
-                    for i in group:
-                        desc = (f"[{i.url[:60]}]({i.url})\n" if i.url else "") + f"{i.desc}"[:1024]
-                        emb.add_field(
-                            name=f"{i.title}",
-                            value=desc or "Nothing",
-                            inline=False,
-                        )
-                    emb.set_footer(
-                        text=f"Safe Search: {not isnsfw} | "
-                        + kwargs["stats"].replace("\n", " ")
-                    )
-                    emb.set_author(name="Google Reverse Image Search", icon_url=GOOGLE_ICON)
-                    emb.set_thumbnail(url=encoded["image_url"])
-                    pages.append(emb)
-            if pages:
-                await Paginator.Simple(timeout=600).start(ctx, pages=pages)
-            else:
-                await ctx.send(
-                    embed=discord.Embed(
-                        title="Google Reverse Image Search",
-                        description="[`" + "Nothing significant found" + f"`]({redir_url})",
-                        color=await ctx.embed_color(),
-                    ).set_thumbnail(url=encoded["image_url"])
-                )
+            await Paginator.Simple(timeout=600).start(ctx, pages)
 
     @commands.is_owner()
     @commands.command(hidden=True)
