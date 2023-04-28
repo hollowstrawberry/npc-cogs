@@ -230,9 +230,10 @@ class CustomHelp(commands.Cog):
                 GLOBAL_CATEGORIES.uncategorised.cogs.append(cog_name)
 
     @commands.is_owner()
-    @commands.group()
+    @commands.group(invoke_without_command=True)
     async def chelp(self, ctx):
         """Configure your custom help"""
+        await ctx.send_help()
 
     @chelp.command()
     async def info(self, ctx):
@@ -856,9 +857,10 @@ class CustomHelp(commands.Cog):
         for page in pagify(text, page_length=1985, shorten_by=0):
             await ctx.send(box(page, lang="yaml"))
 
-    @chelp.group(name="set", aliases=["settings", "setting"])
+    @chelp.group(name="set", aliases=["settings", "setting"], invoke_without_command=True)
     async def chelp_settings(self, ctx):
         """Change various help settings"""
+        await ctx.send_help()
 
     @chelp_settings.command(name="type")
     async def type_(self, ctx):
@@ -1030,9 +1032,10 @@ class CustomHelp(commands.Cog):
             await ctx.send(page)
         await self.refresh_arrows()
 
-    @chelp.group()
+    @chelp.group(invoke_without_command=True)
     async def nsfw(self, ctx):
         """Add categories to nsfw, only displayed in nsfw channels"""
+        await ctx.send_help()
 
     @nsfw.command(name="add")
     async def add_nsfw(self, ctx, category: str):
@@ -1068,9 +1071,10 @@ class CustomHelp(commands.Cog):
         else:
             await ctx.send("Invalid category name")
 
-    @chelp.group()
+    @chelp.group(invoke_without_command=True)
     async def dev(self, ctx):
         """Add categories to dev, only displayed to the bot owner(s)"""
+        await ctx.send_help()
 
     @dev.command(name="add")
     async def add_dev(self, ctx, category: str):
