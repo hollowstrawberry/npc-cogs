@@ -670,7 +670,7 @@ class HybridMenus:
                             emoji=ARROWS["home"].emoji,
                             style=home_style,
                             custom_id="home",
-                            row=1,
+                            row=4,
                         )
                     )
 
@@ -679,7 +679,7 @@ class HybridMenus:
 
                     def __init__(self, name, **kwargs):
                         self.name = name
-                        super().__init__(**kwargs, row=1)
+                        super().__init__(**kwargs, row=4)
 
                     async def callback(self, interaction):
                         await self.view.hmenu.arrow_emoji_button[self.name](interaction)
