@@ -643,7 +643,7 @@ class HybridMenus:
             else:
                 dpy_menu = self.menus[0]
 
-            if len(self.pages) == 1 and not self.category_page_mapping:
+            if False and len(self.pages) == 1:
                 dpy_menu.add_button(await arrow_react(ARROWS["cross"]))
             else:
                 for arrow in ARROWS:
