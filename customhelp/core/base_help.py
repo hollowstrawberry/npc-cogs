@@ -559,8 +559,7 @@ class HybridMenus:
         self.pages = new_source
         self.curr_page = 0
         self.menus = [None, None]
-        await self.create_menutype()
-        await self.create_arrowtype(ctx)
+        await self.start(ctx)
 
     async def show_current_page(self, interaction, **kwargs):
         data = self._get_kwargs_from_page(self.pages[self.curr_page])
