@@ -555,9 +555,10 @@ class HybridMenus:
 
         return category_pages
 
-    def change_source(self, new_source):
+    async def change_source(self, ctx, new_source):
         self.pages = new_source
         self.curr_page = 0
+        await self.create_arrowtype(ctx)
 
     async def show_current_page(self, interaction, **kwargs):
         data = self._get_kwargs_from_page(self.pages[self.curr_page])
@@ -670,7 +671,7 @@ class HybridMenus:
                             emoji=ARROWS["home"].emoji,
                             style=home_style,
                             custom_id="home",
-                            row=4 if self.settings["menutype"] != "buttons" else None,
+                            row=0,
                         )
                     )
 
@@ -691,7 +692,7 @@ class HybridMenus:
                         view_menu.add_item(button)
                     else:
                         for arrow in ARROWS:
-                            if arrow.name == "home":
+                            if arrow.name in ("home", "last", "first"):
                                 continue
                             # TODO remove subclass later (dont need a state for each button)
                             button = Button(arrow.name, **arrow.items())
@@ -731,11 +732,11 @@ class HybridMenus:
         self, user_ctx: commands.Context, interaction, category_name: str
     ):
         if category_pages := await self.get_pages(user_ctx, category_name):
-            self.change_source(category_pages)
+            await self.change_source(user_ctx, category_pages)
             await self.show_current_page(interaction)
 
     async def home_page(self, ctx, interaction):
-        self.change_source(await self.get_pages(ctx, "home"))
+        await self.change_source(ctx, await self.get_pages(ctx, "home"))
         await self.show_current_page(interaction)
 
     async def first_page(self, interaction):
