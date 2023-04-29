@@ -16,7 +16,7 @@ class Category:
     long_desc: Optional[str] = None
     thumbnail: Optional[str] = None
     label: str = ""
-    style: str = "secondary"
+    style: str = "primary"
 
     def __eq__(self, item):
         return item == self.name
