@@ -657,7 +657,8 @@ class HybridMenus:
                         dpy_menu.add_button(await arrow_react(arrow))
 
         elif self.settings["arrowtype"] != "hidden":
-            self.menus[1] = BaseInteractionMenu(hmenu=self)
+            if not self.menus[1]:
+                self.menus[1] = BaseInteractionMenu(hmenu=self)
             view_menu = self.menus[1]
 
             if self.settings["arrowtype"] == "buttons":
