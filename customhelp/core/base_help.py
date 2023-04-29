@@ -670,7 +670,7 @@ class HybridMenus:
                             emoji=ARROWS["home"].emoji,
                             style=home_style,
                             custom_id="home",
-                            row=0,
+                            row=1,
                         )
                     )
 
@@ -679,7 +679,7 @@ class HybridMenus:
 
                     def __init__(self, name, **kwargs):
                         self.name = name
-                        super().__init__(**kwargs, row=3)
+                        super().__init__(**kwargs, row=1)
 
                     async def callback(self, interaction):
                         await self.view.hmenu.arrow_emoji_button[self.name](interaction)
@@ -690,7 +690,7 @@ class HybridMenus:
                         button = Button(arrow.name, **arrow.items())
                         view_menu.add_item(button)
                     else:
-                        for arrow in list(ARROWS)[1:3]:
+                        for arrow in list(ARROWS)[1:4]:
                             # TODO remove subclass later (dont need a state for each button)
                             button = Button(arrow.name, **arrow.items())
                             view_menu.add_item(button)
