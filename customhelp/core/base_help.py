@@ -555,11 +555,9 @@ class HybridMenus:
 
         return category_pages
 
-    async def change_source(self, ctx, new_source):
+    def change_source(self, new_source):
         self.pages = new_source
         self.curr_page = 0
-        self.menus = [None, None]
-        await self.start(ctx)
 
     async def show_current_page(self, interaction, **kwargs):
         data = self._get_kwargs_from_page(self.pages[self.curr_page])
@@ -731,11 +729,11 @@ class HybridMenus:
         self, user_ctx: commands.Context, interaction, category_name: str
     ):
         if category_pages := await self.get_pages(user_ctx, category_name):
-            await self.change_source(user_ctx, category_pages)
+            self.change_source(category_pages)
             await self.show_current_page(interaction)
 
     async def home_page(self, ctx, interaction):
-        await self.change_source(ctx, await self.get_pages(ctx, "home"))
+        self.change_source(await self.get_pages(ctx, "home"))
         await self.show_current_page(interaction)
 
     async def first_page(self, interaction):
