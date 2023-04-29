@@ -558,6 +558,7 @@ class HybridMenus:
     async def change_source(self, ctx, new_source):
         self.pages = new_source
         self.curr_page = 0
+        await self.create_menutype()
         await self.create_arrowtype(ctx)
 
     async def show_current_page(self, interaction, **kwargs):
