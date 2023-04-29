@@ -657,8 +657,7 @@ class HybridMenus:
                         dpy_menu.add_button(await arrow_react(arrow))
 
         elif self.settings["arrowtype"] != "hidden":
-            if not self.menus[1]:
-                self.menus[1] = BaseInteractionMenu(hmenu=self)
+            self.menus[1] = BaseInteractionMenu(hmenu=self)
             view_menu = self.menus[1]
 
             if self.settings["arrowtype"] == "buttons":
@@ -691,9 +690,7 @@ class HybridMenus:
                         button = Button(arrow.name, **arrow.items())
                         view_menu.add_item(button)
                     else:
-                        for arrow in ARROWS:
-                            if arrow.name in ("home", "force_left", "force_right"):
-                                continue
+                        for arrow in ARROWS[1:3]:
                             # TODO remove subclass later (dont need a state for each button)
                             button = Button(arrow.name, **arrow.items())
                             view_menu.add_item(button)
