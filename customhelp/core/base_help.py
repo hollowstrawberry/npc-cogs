@@ -690,7 +690,7 @@ class HybridMenus:
                         button = Button(arrow.name, **arrow.items())
                         view_menu.add_item(button)
                     else:
-                        for arrow in ARROWS[1:3]:
+                        for arrow in list(ARROWS)[1:3]:
                             # TODO remove subclass later (dont need a state for each button)
                             button = Button(arrow.name, **arrow.items())
                             view_menu.add_item(button)
