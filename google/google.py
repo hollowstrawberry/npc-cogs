@@ -2,19 +2,15 @@ import asyncio
 import functools
 import json
 import re
-from datetime import datetime, timezone
-from textwrap import shorten
-from urllib.parse import quote_plus, urlencode
-
 import aiohttp
 import discord
-import Paginator
+from urllib.parse import quote_plus
 from bs4 import BeautifulSoup
 from html2text import html2text as h2t
 from redbot.core import commands
 from redbot.core.bot import Red
-from redbot.core.utils.chat_formatting import humanize_number
-from .utils import get_card, get_query, nsfwcheck, s
+from redbot.core.utils.menus import SimpleMenu
+from .utils import get_card, nsfwcheck, s
 from .yandex import Yandex
 
 GOOGLE_ICON = "https://lh3.googleusercontent.com/COxitqgJr1sJnIDe8-jiKhxDx1FrYbtRHKJ9z_hELisAlapwE9LUPh6fcXIfb5vwpbMl4xl9H9TRFPc5NOO8Sb3VSgIBrfRYvW6cUA"
@@ -63,24 +59,19 @@ class Google(Yandex, commands.Cog):
             groups = [response[n : n + 1] for n in range(0, len(response), 1)]
             for num, group in enumerate(groups, 1):
                 emb = discord.Embed(
-                    title="Google Search: {}".format(
-                        search[:44] + "\N{HORIZONTAL ELLIPSIS}" if len(search) > 45 else search
-                    ),
                     color=await ctx.embed_color(),
-                    url=kwargs["redir"],
-                )
+                    url=kwargs["redir"])
+                emb.set_author(
+                    name="Google Search: " + (search[:44] + "\N{HORIZONTAL ELLIPSIS}" if len(search) > 45 else search),
+                    icon_url=GOOGLE_ICON)
                 for result in group:
-                    desc = (
-                        f"[{result.url[:60]}]({result.url})\n" if result.url else ""
-                    ) + f"{result.desc}"[:800]
+                    desc = (f"[{result.url[:60]}]({result.url})\n" if result.url else "") + f"{result.desc}"[:800]
                     emb.add_field(
                         name=f"{result.title}",
                         value=desc or "Nothing",
                         inline=False,
                     )
-                emb.set_footer(
-                    text=f"Safe Search: {not isnsfw} | " + kwargs["stats"].replace("\n", " ")
-                )
+                emb.set_footer(text=f"Page {num+1}/{len(groups)} | Safe Search: {not isnsfw}")
                 if "thumbnail" in kwargs:
                     emb.set_thumbnail(url=kwargs["thumbnail"])
 
@@ -88,7 +79,7 @@ class Google(Yandex, commands.Cog):
                     emb.set_image(url=kwargs["image"])
                 pages.append(emb)
         if pages:
-            await Paginator.Simple(timeout=600).start(ctx, pages)
+            await SimpleMenu(pages, timeout=600).start(ctx)
         else:
             await ctx.send("No results.")
 
@@ -96,24 +87,23 @@ class Google(Yandex, commands.Cog):
     async def googleimage(self, ctx, *, search: str):
         """Search images on Google."""
         if not search:
-            await ctx.send("Please enter some image name to search")
-        else:
-            isnsfw = nsfwcheck(ctx)
-            pages = []
-            async with ctx.typing():
-                response, kwargs = await self.get_result(search, images=True, nsfw=isnsfw)
+            return await ctx.send("Please enter some image name to search")
+        isnsfw = nsfwcheck(ctx)
+        pages = []
+        async with ctx.typing():
+            response, kwargs = await self.get_result(search, images=True, nsfw=isnsfw)
             size = len(response)
-            for result in response:
+            for i, result in enumerate(response):
                 embed = discord.Embed(
                     color=await ctx.embed_color(),
-                    description="Some images might not be visible.",
+                    description=f"Some images may not be visible.",
                     url=kwargs["redir"])
                 embed.set_author(name="Google Images", icon_url=GOOGLE_ICON)
                 embed.set_image(url=result)
-                embed.set_footer(text=f"Safe Search: {not isnsfw}")
+                embed.set_footer(text=f"Page {i+1}/{size} | Safe Search: {'Off' if isnsfw else 'On'}")
                 pages.append(embed)
             if size > 0:
-                await Paginator.Simple(timeout=600).start(ctx, pages)
+                await SimpleMenu(pages, timeout=600).start(ctx)
             else:
                 await ctx.send("No result")
 

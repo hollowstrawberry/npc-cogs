@@ -2,11 +2,11 @@ import re
 import aiohttp
 import bs4
 import discord
-import Paginator
 from html2text import html2text as h2t
 from redbot.core import commands
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import pagify
+from redbot.core.utils.menus import SimpleMenu
 
 from .utils import EmbedField, group_embed_fields
 
@@ -88,7 +88,7 @@ class Bible(commands.Cog):
         return pages
 
     @commands.hybrid_command()
-    async def bible(self, ctx, *, search):
+    async def bible(self, ctx, *, verses):
         """
         Pull up bible verses or reverse search by querying a word and get all it's references
 
@@ -101,11 +101,11 @@ class Bible(commands.Cog):
         [p]bible test
         """
         version = "NIV"
-        if ver_match := self.ver_re.search(search):
+        if ver_match := self.ver_re.search(verses):
             version = ver_match.group(1)
-            search = self.ver_re.sub("", search).strip()
+            verses = self.ver_re.sub("", verses).strip()
 
-        if re.match(r"\w+(?: ?)\d+:\d+", search):
+        if re.match(r"\w+(?: ?)\d+:\d+", verses):
             url = "/passage/?search="
         else:
             url = "/quicksearch/?quicksearch="
@@ -113,7 +113,7 @@ class Bible(commands.Cog):
         async with ctx.typing():
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    self.BASE_URL + url + search + f"&version={version}"
+                    self.BASE_URL + url + verses + f"&version={version}"
                 ) as resp:
                     soup = bs4.BeautifulSoup(await resp.text(), "html.parser")
 
@@ -132,7 +132,7 @@ class Bible(commands.Cog):
                 # Word Search
                 elif text := soup.find("div", {"class": "search-result-list"}):
                     pages = self.parse_search(
-                        text, search, version, emb_color=await ctx.embed_color()
+                        text, verses, version, emb_color=await ctx.embed_color()
                     )
                 # No result checks
                 else:
@@ -142,6 +142,6 @@ class Bible(commands.Cog):
                         "2) Use the format of `book chapter:verse-range`"
                     )
             if len(pages) > 1:
-                await Paginator.Simple(timeout=600).start(ctx, pages)
+                await SimpleMenu(pages, timeout=600).start(ctx)
             else:
                 await ctx.send(embed=pages[0])

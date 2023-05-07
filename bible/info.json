@@ -10,14 +10,13 @@
     "required_cogs": {},
     "requirements": [
         "html2text",
-        "beautifulsoup4",
-        "discord.py-pagination"
+        "beautifulsoup4"
     ],
     "tags": [
         "utility",
         "fun"
     ],
-    "min_bot_version": "3.3.10",
+    "min_bot_version": "3.5.0",
     "hidden": false,
     "disabled": false,
     "type": "COG"
