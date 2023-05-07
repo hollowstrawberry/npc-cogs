@@ -57,25 +57,23 @@ class Google(Yandex, commands.Cog):
             response, kwargs = await self.get_result(search, nsfw=isnsfw)
             pages = []
             groups = [response[n : n + 1] for n in range(0, len(response), 1)]
-            for num, group in enumerate(groups, 1):
+            for i, group in enumerate(groups, 1):
                 emb = discord.Embed(
                     color=await ctx.embed_color(),
                     url=kwargs["redir"])
-                emb.set_author(
-                    name="Google Search: " + (search[:44] + "\N{HORIZONTAL ELLIPSIS}" if len(search) > 45 else search),
-                    icon_url=GOOGLE_ICON)
+                emb.set_author(name="Google Search", icon_url=GOOGLE_ICON)
                 for result in group:
-                    desc = (f"[{result.url[:60]}]({result.url})\n" if result.url else "") + f"{result.desc}"[:800]
+                    desc = (f"{result.url}\n" if result.url else "") + f"{result.desc}"[:800]
                     emb.add_field(
                         name=f"{result.title}",
                         value=desc or "Nothing",
                         inline=False,
                     )
-                emb.set_footer(text=f"Page {num+1}/{len(groups)} | Safe Search: {not isnsfw}")
+                emb.set_footer(text=f"Page {i+1}/{len(groups)}")
                 if "thumbnail" in kwargs:
                     emb.set_thumbnail(url=kwargs["thumbnail"])
 
-                if "image" in kwargs and num == 1:
+                if "image" in kwargs and i == 1:
                     emb.set_image(url=kwargs["image"])
                 pages.append(emb)
         if pages:
@@ -100,7 +98,7 @@ class Google(Yandex, commands.Cog):
                     url=kwargs["redir"])
                 embed.set_author(name="Google Images", icon_url=GOOGLE_ICON)
                 embed.set_image(url=result)
-                embed.set_footer(text=f"Page {i+1}/{size} | Safe Search: {'Off' if isnsfw else 'On'}")
+                embed.set_footer(text=f"Page {i+1}/{size}")
                 pages.append(embed)
             if size > 0:
                 await SimpleMenu(pages, timeout=600).start(ctx)
