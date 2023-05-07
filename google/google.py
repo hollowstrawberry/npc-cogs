@@ -36,8 +36,8 @@ class Google(Yandex, commands.Cog):
         )
         self.session = aiohttp.ClientSession()
 
-    def cog_unload(self):
-        asyncio.create_task(self.session.close())
+    async def cog_unload(self):
+        await self.session.close()
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
         """Thanks Sinbad!"""
@@ -57,7 +57,7 @@ class Google(Yandex, commands.Cog):
             response, kwargs = await self.get_result(search, nsfw=isnsfw)
             pages = []
             groups = [response[n : n + 1] for n in range(0, len(response), 1)]
-            for i, group in enumerate(groups, 1):
+            for i, group in enumerate(groups):
                 emb = discord.Embed(
                     color=await ctx.embed_color(),
                     url=kwargs["redir"])
@@ -73,7 +73,7 @@ class Google(Yandex, commands.Cog):
                 if "thumbnail" in kwargs:
                     emb.set_thumbnail(url=kwargs["thumbnail"])
 
-                if "image" in kwargs and i == 1:
+                if "image" in kwargs and i == 0:
                     emb.set_image(url=kwargs["image"])
                 pages.append(emb)
         if pages:
@@ -90,7 +90,6 @@ class Google(Yandex, commands.Cog):
         pages = []
         async with ctx.typing():
             response, kwargs = await self.get_result(search, images=True, nsfw=isnsfw)
-            size = len(response)
             for i, result in enumerate(response):
                 embed = discord.Embed(
                     color=await ctx.embed_color(),
@@ -98,39 +97,15 @@ class Google(Yandex, commands.Cog):
                     url=kwargs["redir"])
                 embed.set_author(name="Google Images", icon_url=GOOGLE_ICON)
                 embed.set_image(url=result)
-                embed.set_footer(text=f"Page {i+1}/{size}")
+                embed.set_footer(text=f"Page {i+1}/{len(response)}")
                 pages.append(embed)
-            if size > 0:
+            if pages:
                 await SimpleMenu(pages, timeout=600).start(ctx)
             else:
-                await ctx.send("No result")
-
-    @commands.hybrid_command()
-    async def googleautofill(self, ctx, *, search: str):
-        """Responds with a list of Google autofill results."""
-
-        params = {"client": "firefox", "hl": "en", "q": search}
-        async with ctx.typing():
-            # This “API” is a bit of a hack; it was only meant for use by
-            # Google’s own products. and hence it is undocumented.
-            # Attribution: https://shreyaschand.com/blog/2013/01/03/google-autocomplete-api/
-            base_url = "https://suggestqueries.google.com/complete/search"
-            try:
-                async with self.session.get(base_url, params=params) as response:
-                    if response.status != 200:
-                        return await ctx.send(f"https://http.cat/{response.status}")
-                    data = json.loads(await response.read())
-            except asyncio.TimeoutError:
-                return await ctx.send("Operation timed out.")
-
-            if not data[1]:
-                return await ctx.send("Could not find any results.")
-
-            await ctx.send("\n".join(data[1]))
+                await ctx.send("No results.")
 
     async def get_result(self, query, images=False, nsfw=False):
         """Fetch the data"""
-        # TODO make this fetching a little better
         encoded = quote_plus(query, encoding="utf-8", errors="replace")
 
         async def get_html(url, encoded):
